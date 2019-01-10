@@ -5,7 +5,7 @@ File dir = new File(dataPath(""));
 String[] list = dir.list();
 color[] colorList = new color[list.length*4];
 
-size(400,800);
+size(400,300);
 
 for (int i = 0; i < list.length; i++) {
   println("[" + i + "] " + list[i]);
@@ -32,4 +32,4 @@ for (int i = 0; i < list.length; i++) {
   }
 }
 
-println(colorList);
+println(colorList[0]);
