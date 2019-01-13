@@ -1,6 +1,7 @@
 import os
 import PIL
 from PIL import Image
+import numpy
 
 sat = 0
 hue = 0
@@ -18,8 +19,6 @@ class photo:
     def __init__(self, path):
         """We construct the object by assigning to it 4 dominant colors in
         RGB and HSV"""
-
-        print(path)
 
         self.path = path
         self.colors_rgb = []
@@ -74,15 +73,31 @@ photos_list = []
 
 for i in range(len(file_list)):
     photos_list.append(photo(file_list[i]))
+    print('Analysing pictures: {} %'.format(int(i/len(file_list)*100)))
 
+photos_list.sort(key= lambda photo: photo.colors_hsv[2])
+photos_list.sort(key= lambda photo: photo.colors_hsv[1])
 photos_list.sort(key= lambda photo: photo.colors_hsv[0])
 
 for i in range(len(photos_list)):
-    print(photos_list[i])
+    print('Saving pictures: {} %'.format(int(i/len(file_list)*100)))
     new = Image.open('data/' + photos_list[i].path)
-    new.save('result/' + str(i) + '.bmp')
+    new = new.resize((1000,700), Image.ANTIALIAS)
 
+    b = ''
+    for j in photos_list[i].path:
+        if j != '.':
+            b += j
+        else:
+            break
 
-# We create a list of the colors converted from rgb to hsv without the value
+    new.save('result/' + str(i) + b + '.bmp')
+
+    # Create a small image to indicate overall color found by algorithm
+    a = photos_list[i].colors_rgb
+    a = (a[0], a[1], a[2])
+
+    im = Image.new('RGB', (100,100), color=a)
+    im.save('result/' + str(i) + 'sq' + b + '.bmp')
 
 os.system("pause")
