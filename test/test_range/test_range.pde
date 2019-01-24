@@ -3,7 +3,7 @@ float centery = 200.0;
 
 int i = 1;
 
-float range = 50.0;
+float range = 100.0;
 
 float sumx = 200.0;
 float sumy = 200.0;
