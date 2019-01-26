@@ -4,57 +4,68 @@ import os
 import PIL
 from PIL import Image
 import numpy
+import math
 
 sat = 0
 hue = 0
 value = 0
+
+def RVBtoHSB(r,g,b):
+    # We now store it in HSV
+    r = r/255
+    g = g/255
+    b = b/255
+    Cmax = max(r, g, b)
+    Cmin = min(r, g, b)
+    delta = Cmax - Cmin
+
+    hue = 0
+    sat = 0
+    value = Cmax
+
+    if Cmax == r and delta != 0:
+        hue = 60*((g-b)/delta % 6)
+    elif Cmax == g and delta != 0:
+        hue = 60*((b-r)/delta + 2)
+    elif Cmax == b and delta != 0:
+        hue = 60*((r-g)/delta + 4)
+
+    if Cmax != 0:
+        sat = delta/Cmax
+    # We add the same color in hsv to the hsv list
+
+    return (hue, sat, value)
+
+def dist(p, q):
+    """Returns the distance between two given tuples"""
+    return math.sqrt
 
 class photo:
     """This class represents a photo, with its four dominant colors in RGB
     and in HSV and its position amoungst the color reference"""
 
     def __init__(self, path):
-        """We construct the object by assigning to it 4 dominant colors in
+        """We construct the object by assigning to its 4 dominant colors in
         RGB and HSV"""
 
         self.path = path
         self.colors_rgb = []
-        self.colors_hsv = []
+        self.blobs_list = []
+
         #print("[{}] {}".format(i, file_list[i]))
         # We load one image, and load its pixels
         img = Image.open('data/' + self.path)
         pixels = img.load()
-        # We store the color of each pixel in pixcolor and then in color_list
-        # We store one color in RGB first just in case
-        # so it has the r, g and b components
-        for k in range(len(pixels[0,0])):
-            self.colors_rgb.append(pixels[0,0][k])
-        # We now store it in HSV
-        r = pixels[0,0][0]/255
-        g = pixels[0,0][1]/255
-        b = pixels[0,0][2]/255
-        Cmax = max(r, g, b)
-        Cmin = min(r, g, b)
-        delta = Cmax - Cmin
 
-        hue = 0
-        sat = 0
-        value = Cmax
+        # We store each color in the colors_rgb array
+        for i in range(pixels.length):
+            for j in range(pixels[0].length):
+                self.colors_rgb.append(pixels[i,j])
 
-        if Cmax == r and delta != 0:
-            hue = 60*((g-b)/delta % 6)
-        elif Cmax == g and delta != 0:
-            hue = 60*((b-r)/delta + 2)
-        elif Cmax == b and delta != 0:
-            hue = 60*((r-g)/delta + 4)
+        # We run through the array created to create some blobs accordingly
+        for i in colors_rgb:
 
-        if Cmax != 0:
-            sat = delta/Cmax
-        # We add the same color in hsv to the hsv list
-        self.colors_hsv.append(hue)
-        self.colors_hsv.append(sat)
-        self.colors_hsv.append(value)
-        # Now we have two lists with 3*4 elements each.
+
 
     def __str__(self):
         """Showing the path of the photo"""
