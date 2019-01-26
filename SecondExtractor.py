@@ -2,7 +2,6 @@
 #  - Checking how much we can resize the picture down while keeping the
 #    main color exact
 
-
 import os
 import PIL
 from PIL import Image
@@ -72,16 +71,17 @@ class photo:
         #print("[{}] {}".format(i, file_list[i]))
         # We load one image, and load its pixels
         img = Image.open('data/' + self.path)
-        self.width, self.height = img.size
-        img = img.resize((width/2,height/2), Image.ANTIALIAS)
+        self.width = int(math.floor(img.size[0]/2))
+        height = int(math.floor(img.size[1]/2))
+        img = img.resize((self.width, height), Image.ANTIALIAS)
         pixels = img.load()
 
         # We add one element to the blob list to prevent futur errors
         self.blobs_list.append(blob(pixels[0,0]))
-
+        print('123456789')
         # We run through the pixels to create some blobs accordingly
-        for i in range(pixels.length):
-            for j in range(pixels[0].length):
+        for i in range(self.width):
+            for j in range(height):
                 # For each pixel, we run though the blob list
                 # We don't look at the first pixel as we already added it
                 if not(i == 0 and j == 0):
@@ -112,12 +112,13 @@ class photo:
 dir_path = os.path.dirname(os.path.realpath(__file__))
 data_path = dir_path + "\data"
 file_list = os.listdir(data_path) # file_list is an array
+print(file_list)
 
 # We store each picture once analysed in an array
 photos_list = []
-for i in range(len(file_list)):
-    photos_list.append(photo(file_list[i]))
-    print('Analysing pictures: {} %'.format(int(i/len(file_list)*100)))
+for i in file_list:
+    photos_list.append(photo(i))
+    print(photos_list[len(photos_list) - 1])
 
 # We sort the picture by hue, then by saturation
 # and finally by value if necessary
