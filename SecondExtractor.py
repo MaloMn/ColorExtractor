@@ -11,7 +11,7 @@ import math
 sat = 0
 hue = 0
 value = 0
-range = 3.5
+radius = 3.5
 
 def RVBtoHSB(tuple):
     # Basic conversion formulas
@@ -39,10 +39,12 @@ def RVBtoHSB(tuple):
     return (hue, sat, value)
 
 def dist(p, q):
+    #This function works well
     """Returns the distance between two given tuples"""
     return math.sqrt((p[0] - q[0])**2 +  (p[1] - q[1])**2 + (p[2] - q[2])**2)
 
 class blob:
+    # Works well when tested out
     """Creates a sphere of a certain size that has a number of points"""
 
     def __init__(self, center):
@@ -51,10 +53,12 @@ class blob:
         self.points_nb = 1
 
     def add_point(self, pos):
-        """Adds a point if the distance to
-        the average center is lower or equal than the range"""
+        """Adds a point and changes the center of the blob"""
         self.points_nb += 1
-        self.center = ((center[0] + pos[0])/2, (center[1] + pos[1])/2, (center[2] + pos[2])/2)
+        self.center = ((self.center[0] + pos[0])/2, (self.center[1] + pos[1])/2, (self.center[2] + pos[2])/2)
+    
+    def __str__(self):
+        return 'The blob ({}, {}, {}) contains {} points.'.format(self.center[0], self.center[1], self.center[2], self.points_nb)
 
 class photo:
     """This class represents a photo, with its four dominant colors in RGB
@@ -70,42 +74,52 @@ class photo:
 
         #print("[{}] {}".format(i, file_list[i]))
         # We load one image, and load its pixels
-        img = Image.open('data/' + self.path)
-        self.width = int(math.floor(img.size[0]/2))
-        height = int(math.floor(img.size[1]/2))
-        img = img.resize((self.width, height), Image.ANTIALIAS)
-        pixels = img.load()
+        self.img = Image.open('data/' + self.path)
+        self.width = int(math.floor(self.img.size[0]/10))
+        self.height = int(math.floor(self.img.size[1]/10))
+        print("This image now is {}x{} pixels.".format(self.width, self.height))
+        self.img = self.img.resize((self.width, self.height), Image.ANTIALIAS)
+        self.pixels = self.img.load()
+       
 
+    def calculate(self):
         # We add one element to the blob list to prevent futur errors
-        self.blobs_list.append(blob(pixels[0,0]))
-        print('123456789')
+        self.blobs_list.append(blob(self.pixels[0,0]))
         # We run through the pixels to create some blobs accordingly
         for i in range(self.width):
-            for j in range(height):
+            for j in range(self.height):
                 # For each pixel, we run though the blob list
                 # We don't look at the first pixel as we already added it
                 if not(i == 0 and j == 0):
+                    a = 1000 # Bigger than any distance that will be computed
+                    index = 0 # Doesn't matter what first index we use
                     for k in range(len(self.blobs_list)):
                         # If the distance from the current point to the center
                         # of the current blob is lower than range, the blobs
                         # size in increased. Otherwise, we create a new blob.
-                        if (dist(pixels[i,j], blobs_list[k].center) <= range):
-                            self.blobs_list[k].add_point(pixels[i,j])
-                        else:
-                            self.blobs_list.append(blob(pixels[i,j]))
+                        if dist(self.pixels[i,j], self.blobs_list[k].center) < a:
+                            a = dist(self.pixels[i,j], self.blobs_list[k].center)
+                            index = k
+
+                    if a <= radius:
+                        self.blobs_list[index].add_point(self.pixels[i,j])
+                    else:
+                        self.blobs_list.append(blob(self.pixels[i,j]))
+                
+                #print('{}, {}'.format(i, self.width))
 
         # Now that we have all of our blobs created, we sort them decreasingly
-        blobs_list.sort(key= lambda blob: blob.points_nb, reverse = True)
+        self.blobs_list.sort(key= lambda blob: blob.points_nb, reverse = True)
 
         # Now we can pick the biggest blob center as our main color
-        self.color = blobs_list[0].center
+        self.color = self.blobs_list[0].center
 
         # Quick conversion to HSV
-        self.color = RVBtoHSB(self.color)
+        self.colorHSB = RVBtoHSB(self.color)
 
     def __str__(self):
         """Showing the path of the photo"""
-        string = "Location: " + self.path + "; main color = " + self.color + " (in HSV)."
+        string = "Location: " + self.path + '.'
         return string
 
 # First, we get the list of the pictures
@@ -116,15 +130,16 @@ print(file_list)
 
 # We store each picture once analysed in an array
 photos_list = []
-for i in file_list:
-    photos_list.append(photo(i))
+for a in file_list:
+    photos_list.append(photo(a))
+    photos_list[len(photos_list) - 1].calculate()
     print(photos_list[len(photos_list) - 1])
 
 # We sort the picture by hue, then by saturation
 # and finally by value if necessary
-photos_list.sort(key= lambda photo: photo.color[2])
-photos_list.sort(key= lambda photo: photo.color[1])
-photos_list.sort(key= lambda photo: photo.color[0])
+photos_list.sort(key= lambda photo: photo.colorHSB[2])
+photos_list.sort(key= lambda photo: photo.colorHSB[1])
+photos_list.sort(key= lambda photo: photo.colorHSB[0])
 
 # We save pictures once resized so it doesn't take too much space on the disk
 # as it is saved in bitmap, and hence, uncompressed
@@ -143,8 +158,8 @@ for i in range(len(photos_list)):
     new.save('result/' + str(i) + b + '.bmp')
 
     # Create a small square image to indicate overall color found by algorithm
-    a = photos_list[i].colors
-    a = (a[0], a[1], a[2])
+    a = photos_list[i].color
+    a = (int(a[0]), int(a[1]), int(a[2]))
 
     im = Image.new('RGB', (100,100), color=a)
     im.save('result/' + str(i) + 'sq' + b + '.bmp')
