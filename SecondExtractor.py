@@ -7,11 +7,12 @@ import PIL
 from PIL import Image
 import numpy
 import math
+import time
 
 sat = 0
 hue = 0
 value = 0
-radius = 3.5
+radius = 3.5*3.5
 
 def RVBtoHSB(tuple):
     # Basic conversion formulas
@@ -40,8 +41,8 @@ def RVBtoHSB(tuple):
 
 def dist(p, q):
     #This function works well
-    """Returns the distance between two given tuples"""
-    return math.sqrt((p[0] - q[0])**2 +  (p[1] - q[1])**2 + (p[2] - q[2])**2)
+    """Returns the distance between two given tuples squared"""
+    return (p[0] - q[0])**2 +  (p[1] - q[1])**2 + (p[2] - q[2])**2
 
 class blob:
     # Works well when tested out
@@ -64,10 +65,11 @@ class photo:
     """This class represents a photo, with its four dominant colors in RGB
     and in HSV and its position amoungst the color reference"""
 
-    def __init__(self, path):
+    def __init__(self, path, step):
         """We construct the object by assigning to its 4 dominant colors in
         RGB and HSV"""
 
+        self.step = step
         self.path = path
         # self.colors_rgb = []
         self.blobs_list = []
@@ -75,19 +77,17 @@ class photo:
         #print("[{}] {}".format(i, file_list[i]))
         # We load one image, and load its pixels
         self.img = Image.open('data/' + self.path)
-        self.width = int(math.floor(self.img.size[0]/10))
-        self.height = int(math.floor(self.img.size[1]/10))
-        print("This image now is {}x{} pixels.".format(self.width, self.height))
-        self.img = self.img.resize((self.width, self.height), Image.ANTIALIAS)
+        self.width = self.img.size[0]
+        self.height = self.img.size[1]
+        print("We suppose the image is {}x{} pixels.".format(int(self.width/step), int(self.height/step)))
         self.pixels = self.img.load()
-       
 
     def calculate(self):
         # We add one element to the blob list to prevent futur errors
         self.blobs_list.append(blob(self.pixels[0,0]))
         # We run through the pixels to create some blobs accordingly
-        for i in range(self.width):
-            for j in range(self.height):
+        for i in range(0, self.width, self.step):
+            for j in range(0, self.height, self.step):
                 # For each pixel, we run though the blob list
                 # We don't look at the first pixel as we already added it
                 if not(i == 0 and j == 0):
@@ -122,46 +122,93 @@ class photo:
         string = "Location: " + self.path + '.'
         return string
 
+def entry(message, answers):
+    var = True
+    while var:
+        b = input(message)
+        for i in range(len(answers)):
+            if b == answers[i]:
+                var = False
+    return b
+
+
 # First, we get the list of the pictures
 dir_path = os.path.dirname(os.path.realpath(__file__))
 data_path = dir_path + "\data"
 file_list = os.listdir(data_path) # file_list is an array
-print(file_list)
+#print(file_list)
 
-# We store each picture once analysed in an array
-photos_list = []
-for a in file_list:
-    photos_list.append(photo(a))
-    photos_list[len(photos_list) - 1].calculate()
-    print(photos_list[len(photos_list) - 1])
+###############################################################
+######### Choosing between batch or single processing #########
+###############################################################
 
-# We sort the picture by hue, then by saturation
-# and finally by value if necessary
-photos_list.sort(key= lambda photo: photo.colorHSB[2])
-photos_list.sort(key= lambda photo: photo.colorHSB[1])
-photos_list.sort(key= lambda photo: photo.colorHSB[0])
+choice = str(entry('Are you processing a single image or a batch of file ? (single/batch) : ', ['single', 'batch']))
 
-# We save pictures once resized so it doesn't take too much space on the disk
-# as it is saved in bitmap, and hence, uncompressed
-for i in range(len(photos_list)):
-    print('Saving pictures: {} %'.format(int(i/len(file_list)*100)))
-    new = Image.open('data/' + photos_list[i].path)
-    new = new.resize((1000,700), Image.ANTIALIAS)
-    # Quickly renaming files, removing the original extension (.jpg or .png)
-    b = ''
-    for j in photos_list[i].path:
-        if j != '.':
-            b += j
-        else:
-            break
+if choice == 'single':
+    for c in range(30, 61, 5):
+        
+        # We record the time spent on the action
+        t1 = time.time()
+        main = photo(file_list[22], c)
+        main.calculate()
+        t2 = time.time()
 
-    new.save('result/' + str(i) + b + '.bmp')
+        # We print the time spent on the processing
+        print(t2 - t1)
+        print('Image processed in {}:{}.'.format(int((t2-t1) // 60), int((t2-t1) % 60)))
 
-    # Create a small square image to indicate overall color found by algorithm
-    a = photos_list[i].color
-    a = (int(a[0]), int(a[1]), int(a[2]))
+        # We retrieve the name of the file
+        b = ''
+        for j in main.path:
+            if j != '.':
+                b += j
+            else:
+                break
 
-    im = Image.new('RGB', (100,100), color=a)
-    im.save('result/' + str(i) + 'sq' + b + '.bmp')
+        # We get the color as a tuple
+        a = main.color
+        a = (int(a[0]), int(a[1]), int(a[2]))
+
+        # We save the square image with the name : OriginalNameOfTheFile_Steps.bmp
+        im = Image.new('RGB', (500,500), color=a)
+        im.save('result/' + b + '_' + str(main.step) + 'steps_' + str(int(t2-t1)) + 'sec' + '.bmp')
+
+
+else:    
+    # We store each picture once analysed in an array
+    photos_list = []
+    for a in file_list:
+        photos_list.append(photo(a, 50))
+        photos_list[len(photos_list) - 1].calculate()
+        print(photos_list[len(photos_list) - 1])
+
+    # We sort the picture by hue, then by saturation
+    # and finally by value if necessary
+    photos_list.sort(key= lambda photo: photo.colorHSB[2])
+    photos_list.sort(key= lambda photo: photo.colorHSB[1])
+    photos_list.sort(key= lambda photo: photo.colorHSB[0])
+
+    # We save pictures once resized so it doesn't take too much space on the disk
+    # as it is saved in bitmap, and hence, uncompressed
+    for i in range(len(photos_list)):
+        print('Saving pictures: {} %'.format(int(i/len(file_list)*100)))
+        new = Image.open('data/' + photos_list[i].path)
+        new = new.resize((1000,700), Image.ANTIALIAS)
+        # Quickly renaming files, removing the original extension (.jpg or .png)
+        b = ''
+        for j in photos_list[i].path:
+            if j != '.':
+                b += j
+            else:
+                break
+
+        new.save('result/' + str(i) + b + '.bmp')
+
+        # Create a small square image to indicate overall color found by algorithm
+        a = photos_list[i].color
+        a = (int(a[0]), int(a[1]), int(a[2]))
+
+        im = Image.new('RGB', (100,100), color=a)
+        im.save('result/' + str(i) + 'sq' + b + '.bmp')
 
 os.system("pause")
