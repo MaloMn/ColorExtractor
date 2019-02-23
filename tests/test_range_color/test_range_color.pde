@@ -1,5 +1,5 @@
 // Range represents the length of the boxe
-float range = 20; // Represents the diameter
+float range = 20*100/255; // Represents the diameter
 float i = 0.0;
 
 float h, s, v;

@@ -2,6 +2,7 @@
 #  - Checking how much we can resize the picture down while keeping the
 #    main color exact
 
+import sys
 import os
 import PIL
 from PIL import Image
@@ -12,7 +13,17 @@ import time
 sat = 0
 hue = 0
 value = 0
-radius = 10**2
+radius = 20**2
+
+def progress(count, total, status=''):
+    bar_len = 60
+    filled_len = int(round(bar_len * count / float(total)))
+
+    percents = round(100.0 * count / float(total), 1)
+    bar = '=' * filled_len + '-' * (bar_len - filled_len)
+
+    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
+    sys.stdout.flush() # As suggested by Rom Ruben (see: http://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console/27871113#comment50529068_27871113)
 
 def RVBtoHSB(tuple):
     # Basic conversion formulas
@@ -89,22 +100,23 @@ class Photo:
             for j in range(0, self.height, self.step):
                 # For each pixel, we run though the Blob list
                 # We don't look at the first pixel as we already added it
-                if not(i == 0 and j == 0):
-                    a = 1000000 # Bigger than any distance that will be computed
-                    index = 0 # Doesn't matter what first index we use
-                    for k in range(len(self.blobs_list)):
-                        # If the distance from the current point to the center
-                        # of the current Blob is lower than range, the blobs
-                        # size in increased. Otherwise, we create a new Blob.
-                        if dist(pixels[i,j], self.blobs_list[k].center) < a:
-                            a = dist(pixels[i,j], self.blobs_list[k].center)
-                            index = k
-
-                    if a <= radius:
-                        self.blobs_list[index].add_point(pixels[i,j])
-                    else:
-                        self.blobs_list.append(Blob(pixels[i,j]))
                 
+                a = 1000000 # Bigger than any distance that will be computed
+                index = 0 # Doesn't matter what first index we use
+                for k in range(len(self.blobs_list)):
+                    # If the distance from the current point to the center
+                    # of the current Blob is lower than range, the blobs
+                    # size in increased. Otherwise, we create a new Blob.
+                    if dist(pixels[i,j], self.blobs_list[k].center) < a:
+                        a = dist(pixels[i,j], self.blobs_list[k].center)
+                        index = k
+
+                if a <= radius:
+                    self.blobs_list[index].add_point(pixels[i,j])
+                else:
+                    self.blobs_list.append(Blob(pixels[i,j]))
+                
+                progress(j+i*self.height, self.height*self.width, status = 'Scanning picture')
                 #print('{}, {}'.format(i, self.width))
 
         # Now that we have all of our blobs created, we sort them decreasingly
@@ -148,8 +160,7 @@ class Photo:
 
                 pixels[i,j] = (c[0], c[1], c[2]) # set the colour accordingly
         g.save('result/' + str(x) + 'sq' + b + '.bmp')
-
-       
+    
 def entry(message, answers):
     var = True
     while var:
@@ -172,7 +183,7 @@ file_list = os.listdir(data_path) # file_list is an array
 choice = str(entry('Are you processing a single image or a batch of file ? (single/batch) : ', ['single', 'batch']))
 
 if choice == 'single':
-    for c in range(5, 61, 5):
+    for c in range(1, 61, 5):
         
         # We record the time spent on the action
         t1 = time.time()
