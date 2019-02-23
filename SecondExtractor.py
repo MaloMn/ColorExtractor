@@ -44,7 +44,7 @@ def dist(p, q):
     """Returns the distance between two given tuples squared"""
     return (p[0] - q[0])**2 +  (p[1] - q[1])**2 + (p[2] - q[2])**2
 
-class blob:
+class Blob:
     # Works well when tested out
     """Creates a sphere of a certain size that has a number of points"""
 
@@ -54,15 +54,15 @@ class blob:
         self.points_nb = 1
 
     def add_point(self, pos):
-        """Adds a point and changes the center of the blob"""
+        """Adds a point and changes the center of the Blob"""
         self.points_nb += 1
         self.center = ((self.center[0] + pos[0])/2, (self.center[1] + pos[1])/2, (self.center[2] + pos[2])/2)
     
     def __str__(self):
-        return 'The blob ({}, {}, {}) contains {} points.'.format(self.center[0], self.center[1], self.center[2], self.points_nb)
+        return 'The Blob ({}, {}, {}) contains {} points.'.format(self.center[0], self.center[1], self.center[2], self.points_nb)
 
-class photo:
-    """This class represents a photo, with its four dominant colors in RGB
+class Photo:
+    """This class represents a Photo, with its four dominant colors in RGB
     and in HSV and its position amoungst the color reference"""
 
     def __init__(self, path, step):
@@ -79,49 +79,77 @@ class photo:
         self.img = Image.open('data/' + self.path)
         self.width = self.img.size[0]
         self.height = self.img.size[1]
-        print("We suppose the image is {}x{} pixels.".format(int(self.width/step), int(self.height/step)))
-        self.pixels = self.img.load()
+        print("We suppose the image is {}x{} pixels.".format(int(self.width/self.step), int(self.height/self.step)))
+        pixels = self.img.load()
 
-    def calculate(self):
-        # We add one element to the blob list to prevent futur errors
-        self.blobs_list.append(blob(self.pixels[0,0]))
+        # We add one element to the Blob list to prevent futur errors
+        self.blobs_list.append(Blob(pixels[0,0]))
         # We run through the pixels to create some blobs accordingly
         for i in range(0, self.width, self.step):
             for j in range(0, self.height, self.step):
-                # For each pixel, we run though the blob list
+                # For each pixel, we run though the Blob list
                 # We don't look at the first pixel as we already added it
                 if not(i == 0 and j == 0):
                     a = 1000 # Bigger than any distance that will be computed
                     index = 0 # Doesn't matter what first index we use
                     for k in range(len(self.blobs_list)):
                         # If the distance from the current point to the center
-                        # of the current blob is lower than range, the blobs
-                        # size in increased. Otherwise, we create a new blob.
-                        if dist(self.pixels[i,j], self.blobs_list[k].center) < a:
-                            a = dist(self.pixels[i,j], self.blobs_list[k].center)
+                        # of the current Blob is lower than range, the blobs
+                        # size in increased. Otherwise, we create a new Blob.
+                        if dist(pixels[i,j], self.blobs_list[k].center) < a:
+                            a = dist(pixels[i,j], self.blobs_list[k].center)
                             index = k
 
                     if a <= radius:
-                        self.blobs_list[index].add_point(self.pixels[i,j])
+                        self.blobs_list[index].add_point(pixels[i,j])
                     else:
-                        self.blobs_list.append(blob(self.pixels[i,j]))
+                        self.blobs_list.append(Blob(pixels[i,j]))
                 
                 #print('{}, {}'.format(i, self.width))
 
         # Now that we have all of our blobs created, we sort them decreasingly
-        self.blobs_list.sort(key= lambda blob: blob.points_nb, reverse = True)
+        self.blobs_list.sort(key= lambda Blob: Blob.points_nb, reverse = True)
 
-        # Now we can pick the biggest blob center as our main color
+        # Now we can pick the biggest Blob center as our main color
         self.color = self.blobs_list[0].center
 
         # Quick conversion to HSV
         self.colorHSB = RVBtoHSB(self.color)
 
     def __str__(self):
-        """Showing the path of the photo"""
-        string = "Location: " + self.path + '.'
+        """Showing the path of the Photo"""
+        string = "Name: " + self.path + '.'
         return string
 
+    def save(self, x):
+        """Saves the picture with its name modified"""
+        # We change the name
+        b = ''
+        for j in self.path:
+            if j != '.':
+                b += j
+            else:
+                break
+        # We save the main picture
+        self.img = self.img.resize((int(self.width/self.step), int(self.height/self.step)), Image.ANTIALIAS)
+        self.img.save('result/' + str(x) + b + '.bmp')
+
+        # We save a small square indicating the colors found
+        g = Image.new( 'RGB', (400,400), "black") # create a new black image
+        pixels = g.load() # create the pixel map
+
+        for i in range(g.size[0]):    # for every col:
+            for j in range(g.size[1]):    # For every row
+                # We compute the location of the color
+                h = int(i//(g.size[0]/4)+4*(j//(g.size[1]/4)))
+                #We get the color at this position
+                c = self.blobs_list[h].center
+                c = (int(c[0]), int(c[1]), int(c[2]))
+
+                pixels[i,j] = (c[0], c[1], c[2]) # set the colour accordingly
+        g.save('result/' + str(x) + 'sq' + b + '.bmp')
+
+       
 def entry(message, answers):
     var = True
     while var:
@@ -130,7 +158,6 @@ def entry(message, answers):
             if b == answers[i]:
                 var = False
     return b
-
 
 # First, we get the list of the pictures
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -149,8 +176,7 @@ if choice == 'single':
         
         # We record the time spent on the action
         t1 = time.time()
-        main = photo(file_list[22], c)
-        main.calculate()
+        main = Photo(file_list[22], c)
         t2 = time.time()
 
         # We print the time spent on the processing
@@ -173,42 +199,23 @@ if choice == 'single':
         im = Image.new('RGB', (500,500), color=a)
         im.save('result/' + b + '_' + str(main.step) + 'steps_' + str(int(t2-t1)) + 'sec' + '.bmp')
 
-
 else:    
     # We store each picture once analysed in an array
     photos_list = []
     for a in file_list:
-        photos_list.append(photo(a, 50))
-        photos_list[len(photos_list) - 1].calculate()
+        photos_list.append(Photo(a, 150))
         print(photos_list[len(photos_list) - 1])
 
     # We sort the picture by hue, then by saturation
     # and finally by value if necessary
-    photos_list.sort(key= lambda photo: photo.colorHSB[2])
-    photos_list.sort(key= lambda photo: photo.colorHSB[1])
-    photos_list.sort(key= lambda photo: photo.colorHSB[0])
+    photos_list.sort(key= lambda Photo: Photo.colorHSB[2])
+    photos_list.sort(key= lambda Photo: Photo.colorHSB[1])
+    photos_list.sort(key= lambda Photo: Photo.colorHSB[0])
 
     # We save pictures once resized so it doesn't take too much space on the disk
     # as it is saved in bitmap, and hence, uncompressed
     for i in range(len(photos_list)):
         print('Saving pictures: {} %'.format(int(i/len(file_list)*100)))
-        new = Image.open('data/' + photos_list[i].path)
-        new = new.resize((1000,700), Image.ANTIALIAS)
-        # Quickly renaming files, removing the original extension (.jpg or .png)
-        b = ''
-        for j in photos_list[i].path:
-            if j != '.':
-                b += j
-            else:
-                break
-
-        new.save('result/' + str(i) + b + '.bmp')
-
-        # Create a small square image to indicate overall color found by algorithm
-        a = photos_list[i].color
-        a = (int(a[0]), int(a[1]), int(a[2]))
-
-        im = Image.new('RGB', (100,100), color=a)
-        im.save('result/' + str(i) + 'sq' + b + '.bmp')
+        photos_list[i].save(i)
 
 os.system("pause")
