@@ -12,7 +12,7 @@ import time
 sat = 0
 hue = 0
 value = 0
-radius = 3.5*3.5
+radius = 10**2
 
 def RVBtoHSB(tuple):
     # Basic conversion formulas
@@ -90,7 +90,7 @@ class Photo:
                 # For each pixel, we run though the Blob list
                 # We don't look at the first pixel as we already added it
                 if not(i == 0 and j == 0):
-                    a = 1000 # Bigger than any distance that will be computed
+                    a = 1000000 # Bigger than any distance that will be computed
                     index = 0 # Doesn't matter what first index we use
                     for k in range(len(self.blobs_list)):
                         # If the distance from the current point to the center
@@ -116,9 +116,9 @@ class Photo:
         # Quick conversion to HSV
         self.colorHSB = RVBtoHSB(self.color)
 
-    def __str__(self):
+    def __repr__(self):
         """Showing the path of the Photo"""
-        string = "Name: " + self.path + '.'
+        string = "Name: " + self.path  + '; ' + str(len(self.blobs_list)) + ' colors found' +  '.'
         return string
 
     def save(self, x):
@@ -172,32 +172,18 @@ file_list = os.listdir(data_path) # file_list is an array
 choice = str(entry('Are you processing a single image or a batch of file ? (single/batch) : ', ['single', 'batch']))
 
 if choice == 'single':
-    for c in range(30, 61, 5):
+    for c in range(5, 61, 5):
         
         # We record the time spent on the action
         t1 = time.time()
-        main = Photo(file_list[22], c)
+        main = Photo(file_list[16], c)
+        print(main)
         t2 = time.time()
 
         # We print the time spent on the processing
-        print(t2 - t1)
         print('Image processed in {}:{}.'.format(int((t2-t1) // 60), int((t2-t1) % 60)))
 
-        # We retrieve the name of the file
-        b = ''
-        for j in main.path:
-            if j != '.':
-                b += j
-            else:
-                break
-
-        # We get the color as a tuple
-        a = main.color
-        a = (int(a[0]), int(a[1]), int(a[2]))
-
-        # We save the square image with the name : OriginalNameOfTheFile_Steps.bmp
-        im = Image.new('RGB', (500,500), color=a)
-        im.save('result/' + b + '_' + str(main.step) + 'steps_' + str(int(t2-t1)) + 'sec' + '.bmp')
+        main.save(c)
 
 else:    
     # We store each picture once analysed in an array
