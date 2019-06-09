@@ -146,31 +146,31 @@ def EpsilonFinder(X, minpts):
     
     # PLOTTING THE KNEE FOUND
     # =============================================================================
-    import matplotlib
-    matplotlib.use('Agg') #Useful to save the graph as an image later
-    import matplotlib.pyplot as plt
-    xe = int(xe)
-    
-    line1 = []
-    inter1 = []
-    for i in range(xe+2):
-        line1.append(a1*i + y0)
-        inter1.append(i)
-    
-    line2 = []
-    inter2 = []
-    for i in range(xe, len(avg_dist)):
-        line2.append(a2*i + y3-a2*x3)
-        inter2.append(i)
-    
-    fig = plt.figure(1)
-    fig.set_size_inches(10,7)
-    
-    plt.plot(avg_dist) + plt.plot(inter1, line1) + plt.plot(inter2, line2)
-    
-    name = 'Knee.png'
-    plt.savefig(name)
-    plt.close(1)
+#    import matplotlib
+#    matplotlib.use('Agg') #Useful to save the graph as an image later
+#    import matplotlib.pyplot as plt
+#    xe = int(xe)
+#    
+#    line1 = []
+#    inter1 = []
+#    for i in range(xe+2):
+#        line1.append(a1*i + y0)
+#        inter1.append(i)
+#    
+#    line2 = []
+#    inter2 = []
+#    for i in range(xe, len(avg_dist)):
+#        line2.append(a2*i + y3-a2*x3)
+#        inter2.append(i)
+#    
+#    fig = plt.figure(1)
+#    fig.set_size_inches(10,7)
+#    
+#    plt.plot(avg_dist) + plt.plot(inter1, line1) + plt.plot(inter2, line2)
+#    
+#    name = 'Knee.png'
+#    plt.savefig(name)
+#    plt.close(1)
     # =============================================================================
     
     return epsilon
@@ -213,24 +213,23 @@ class Photo:
         
         # We apply DBSCAN locally
         # Will contain the list of locals cores.
-        cores_list = []
+        self.cores_list = []
         for i in range(len(self.pixels_list)):
             epsilon = EpsilonFinder(self.pixels_list[i], minpts)
             epsilon = 0.001 if epsilon <= 0 else epsilon
             db = DBSCAN(eps = epsilon, min_samples = minpts, algorithm='ball_tree').fit(self.pixels_list[i]) 
-            cores_list.extend(db.components_)
-            self.pixels_list[i] = db.components_
+            self.cores_list.extend(db.components_)
+
             print(i)
         
-        print(len(cores_list))
+        print(len(self.cores_list))
         
-        cores_list = short(cores_list, 100000)
-        epsilon = EpsilonFinder(cores_list, minpts)        
+        self.cores_list = short(self.cores_list, 100000)
+        epsilon = EpsilonFinder(self.cores_list, minpts)        
         epsilon = 0.001 if epsilon <= 0 else epsilon
-        db = DBSCAN(eps = epsilon, min_samples = minpts, algorithm='ball_tree').fit(cores_list)
+        db = DBSCAN(eps = epsilon, min_samples = minpts, algorithm='ball_tree').fit(self.cores_list)
 
         self.labels = db.labels_
-
     
     def show(self):
 
@@ -241,9 +240,9 @@ class Photo:
         for i in range(amax(self.labels) + 1):
             self.points.append([])
         
-        for i in range(len(self.labels)):
+        for i in range(len(self.cores_list)):
             if self.labels[i] >= 0 :
-                self.points[self.labels[i]].append(self.pixels_list[i])
+                self.points[self.labels[i]].append(self.cores_list[i])
         
         # We get number of points in the largest cluster to draw some circles according to that
         self.biggest = 0
@@ -268,6 +267,10 @@ class Photo:
         
         for i in range(len(self.points_avg)):
             color = RGBtoHEXA(self.points_avg[i])
+            
+            x = self.points_avg[i][0]
+            y = self.points_avg[i][1]
+            z = self.points_avg[i][2]
             
             # We plot the point
             ax.scatter(x, y, z, c=color, marker = 'o', s=1500*len(self.points[i])/self.biggest)
