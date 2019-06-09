@@ -1,0 +1,29 @@
+################ 10.04.2019 ################
+
+Log created. Should have been created sooner.
+I think we have reached the maximum potentiel of my previous algorithm.
+It isn't fast enough, however, results are overwhelming, as it can restitute the sixteenth dominant colors of an image.
+
+# New technique: DB-SCAN.
+
+I have to create a list of the distances between the points of the images. How long does it takes?
+Then, it needs to be sorted, and we need to take epsilon = 0.1% of all distances.
+--> Find a better way to determine epsilon and minpts !
+
+Launch algorithm with minpts varying. How long is the algorithm, and what minpts works best?
+
+################ 15.04.2019 ################
+
+Main file split in 3 different ones to separate functions and core program.
+Works well. 
+Need to make a function to tell time left, and start dbscan analysis!
+
+
+################ 16/04/2019 ################
+
+Corrections made to the image_processing library.
+I need to update the code without using Pixel class.
+I need to import an image directly as an array and work on that, it will be a lot simpler afterwards.
+
+--> pixels = np.asarray(PIL.Image.open('pathtotheimage'))
+im = PIL.Image.fromarray(numpy.uint8(I))

@@ -1,0 +1,76 @@
+################ 17.04.2019 ################
+
+Log created. 
+Files copies, need to be modified.
+
+################ 18.04.2019 ################
+
+DBSCAN implemented. Problem is the time it takes. We need to know how many 3D-points it can handle.
+Then, we need to plot the time spent in terms of the number of points analysed to make a compromise.
+
+The modelling of the time according to the number of points : time = 1.192e-4 * nb_points_in_thousands**2
+
+Hence, better not to go higher than 600 000 points (about 40 seconds). Let's say 500 000 as a fixed value.
+This givez us a 707*707 px image.
+
+--> NEED TO DO THE TESTS AGAIN WITH SOME TUPLES RANGING FROM 0 TO 255 !
+
+
+################ 19.04.2019 ################
+
+Turns out there isn't enough memory to analyse a full picture.
+Option 1 is for now to cut the datas in two (or more) parts (one pixel over two) and dbscan each sample.
+To do that, we need to compute the neighbors and the distance matrix before dbscan, need to see in what order.
+Need to see what 'algorithm = ...' means in dbscan algorithm.
+
+################ 21.04.2019 ################
+
+Problem 1 : finding Epsilon --> It is rather hard, and can hardly be done in an automatic manner.
+Solution 1 : Computing dbscan on a smaller set, with  various eps number (minpts fixed at 100 ?), seeing what works best using calinski or silhouette.
+Once we have our eps, we  apply dbscan to the full set, and see how it works out.
+
+Problem 2 : It might not work well as the approximation of epsilon is done on a *smaller* set.
+Solution 2 : Using kNN algorithm, and looking online, try to guess eps and minpts from the whole set,
+and then applying it. BUT IT SEEMS A LOT HARDER !
+
+To vary epsilon, we can do this :
+	range(0,max,25)
+	range(best-25, best+25, 5)
+	and etc, always shrinking the stepping to have a precise eps.
+
+Problem 3 : Representing the result
+Solution 3 : Plotting the center of the clusters found by averaging the points of the cluster ;)
+
+################ 28.04.2019 ################
+
+Made an Epsilon Finder which uses the Knee technique to find the appropriate epsilon in term of minpts.
+But it is quite long! So I need to use the functions of scikit learn to make it faster.
+
+Then I need to represent the result: Plotting the center of the clusters found by averaging the points of the cluster, as said before.
+
+Hence:
+	1. Getting a faster function
+		We can compute the distance matrix needeed by DBSCAN before, and then feed it to DBSCAN.
+	2. Plotting result
+
+For now, this works well with a resized image of the color wished
+
+Both things have been done, and it works really well on well-resized images, centered on the color wanted.
+For it to be effective, there needs to be less than 400 000 pixels, and minpts has to be bigger than 25.
+Note that the bigger minpts, the more precision on the final color there is, but the more time it takes.
+
+Hence, every wanted image has to be resized!
+
+################ 03.06.2019 ################
+
+I got a great idea! 
+What if we apply DBSCAN locally, just get the core points, and apply DBSCAN to the concatenation of all core points?!
+
+Pb 1 : We have to use a lower minpts
+
+INSTAGRAM PHOTO SIZES :
+    Photo carrée : 1080 x 1080 pixels (1:1)
+    Photo paysage : 1080 x 566 pixels (1,91:1)
+    Photo portrait : 1080 x 1350 pixels (4:5)
+
+Everything is implemented, it takes some time though, needs a lot of testing and improvements! Yay!
