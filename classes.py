@@ -5,7 +5,7 @@ import numpy as np
  
 class Photo:
     
-    def __init__(self, path, reduce = True):    
+    def __init__(self, path):    
         """
             Opens up an image, and puts its pixels in self.pixels.
             It also lists them in self.pixels_list.
@@ -18,7 +18,7 @@ class Photo:
         self.pixels_list = []
         for i in range(0, len(self.pixels), 1):
             for j in range(0, len(self.pixels[0]), 1):
-                self.pixels_list.append(tuple(self.pixels[i,j].tolist()))
+                self.pixels_list.append(RGBtoHSB(tuple(self.pixels[i,j].tolist())))
                 
     def compute(self, nb_wished_colors, hue_rez, sat_rez, val_rez):
         """

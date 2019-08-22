@@ -6,7 +6,7 @@ import os
 import time
 
 from functions import *
-from img_processing import *
+from classes import *
 
 sat = 0
 hue = 0
@@ -23,22 +23,18 @@ print(file_list)
 ######### Choosing between batch or single processing #########
 ###############################################################
 
-choice = str(entry('Are you processing a single image or a batch of file ? (single/batch) : ', ['single', 'batch']))
-
+choice = 'single'
 if choice == 'single':
-    for c in range(50, 52, 1):
-        
-        # We record the time spent on the action
-        t1 = time.time()
-        main = Photo(file_list[23], radius, c)
-        main.make_blob()
-        print(main)
-        t2 = time.time()
+    # We record the time spent on the action
+    t1 = time.time()
+    main = Photo('data/DSC03213.jpg')
+    main.compute(30**2, 20, 0.1, 0.1)
+    t2 = time.time()
 
-        # We print the time spent on the processing
-        print('Image processed in {}:{}.'.format(int((t2-t1) // 60), int((t2-t1) % 60)))
+    # We print the time spent on the processing
+    print('Image processed in {}:{}.'.format(int((t2-t1) // 60), int((t2-t1) % 60)))
 
-        main.save(c, int(t2-t1))
+    main.save('output.png')
 
 else:    
     # We store each picture once analysed in an array
@@ -60,4 +56,4 @@ else:
         print('Saving pictures: {} %'.format(int(i/len(file_list)*100)))
         photos_list[i].save(i)
 
-os.system("pause")
+#os.system("pause")

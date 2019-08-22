@@ -104,8 +104,6 @@ for i in range(nb_wished_colors):
             repartition[x,y,z] = 0
             break
 
-grid = np.empty((m, m, 3), dtype=int)
-
 factor = int(len(colors) ** (1/2))
 size = 100
 width = size * factor
