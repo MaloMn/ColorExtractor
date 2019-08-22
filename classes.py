@@ -63,6 +63,9 @@ class Photo:
         #self.colors now contains the most important colors.
     
     def save(self, name):
+        """
+            Saves a square image of the main colors.
+        """
         factor = int(len(self.colors) ** (1/2))
         size = 100
         width = size * factor
