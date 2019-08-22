@@ -20,6 +20,53 @@ def RGBtoHEXA(l):
     
     return '#' + r + g + b
 
+def RGBtoHSB(tuple):
+    # Wikipedia conversion formulas
+    r = tuple[0]/255
+    g = tuple[1]/255
+    b = tuple[2]/255
+    Cmax = max(r, g, b)
+    Cmin = min(r, g, b)
+    delta = Cmax - Cmin
+
+    hue = 0
+    sat = 0
+    value = Cmax
+
+    if Cmax == r and delta != 0:
+        hue = 60*((g-b)/delta % 6)
+    elif Cmax == g and delta != 0:
+        hue = 60*((b-r)/delta + 2)
+    elif Cmax == b and delta != 0:
+        hue = 60*((r-g)/delta + 4)
+
+    if Cmax != 0:
+        sat = delta/Cmax
+
+    return (hue, sat, value)
+
+def HSBtoRGB(tuple):
+    H = tuple[0]
+   
+    C = tuple[2]*tuple[1]
+    X = C * (1 - abs(H/60 % 2 - 1))
+    m = tuple[2] - C
+    
+    if H >= 0 and H < 60:
+        r, g, b = (C, X, 0)
+    elif H >= 60 and H < 120:
+        r, g, b = (X, C, 0)
+    elif H >= 120 and H < 180:
+        r, g, b = (0, C, X)
+    elif H >= 180 and H < 240:
+        r, g, b = (0, X, C)
+    elif H >= 240 and H < 300:
+        r, g, b = (X, 0, C)
+    else:
+        r, g, b = (C, 0, X)
+        
+    return ((r+m)*255, (g+m)*255, (b+m)*255)
+
 def short(l, length):
     """ Deletes some random elements of a list to make it shorter according to
     a given length"""
@@ -180,31 +227,6 @@ def progress(count, total, status=''):
 
     sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, ' %', status))
     sys.stdout.flush() # As suggested by Rom Ruben (see: http://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console/27871113#comment50529068_27871113)
-
-def RGBtoHSB(tuple):
-    # Wikipedia conversion formulas
-    r = tuple[0]/255
-    g = tuple[1]/255
-    b = tuple[2]/255
-    Cmax = max(r, g, b)
-    Cmin = min(r, g, b)
-    delta = Cmax - Cmin
-
-    hue = 0
-    sat = 0
-    value = Cmax
-
-    if Cmax == r and delta != 0:
-        hue = 60*((g-b)/delta % 6)
-    elif Cmax == g and delta != 0:
-        hue = 60*((b-r)/delta + 2)
-    elif Cmax == b and delta != 0:
-        hue = 60*((r-g)/delta + 4)
-
-    if Cmax != 0:
-        sat = delta/Cmax
-
-    return (hue, sat, value)
 
 def dist(p, q):
     """Returns the distance squared between two given tuples"""
