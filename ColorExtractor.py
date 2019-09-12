@@ -1,59 +1,117 @@
-# Things that can be improved :
-#  - Checking how much we can resize the picture down while keeping the
-#    main color exact
+import os, time, pickle
+from scipy.spatial import distance
+from c_photo import Photo
 
-import os
-import time
 
-from functions import *
-from classes import *
+def min_greater_than_0(array):
+    """Returns the index of the smallest element greater than 0."""
 
-sat = 0
-hue = 0
-value = 0
-radius = 40**2
+    # Checking array type:
+    if array != list(array):
+        raise TypeError("min_greater_than_0 requires a list.")
+
+    # We define m as the max of the list as a starting point
+    m = max(array)
+    index_m = array.index(m)
+
+    for i, el in enumerate(array):
+        if (el < m) and (el > 0):
+            m = el
+            index_m = i
+
+    if m != 0:
+        return index_m
+    else:
+        return None
+
 
 # First, we get the list of the pictures
 dir_path = os.path.dirname(os.path.realpath(__file__))
 data_path = dir_path + "\data"
 file_list = os.listdir(data_path) # file_list is an array
-print(file_list)
 
-###############################################################
-######### Choosing between batch or single processing #########
-###############################################################
+for a in range(len(file_list)):
+    file_list[a] = "data/" + file_list[a]
 
-choice = 'single'
-if choice == 'single':
-    # We record the time spent on the action
-    t1 = time.time()
-    main = Photo('data/DSC03213.jpg')
-    main.compute(30**2, 20, 0.1, 0.1)
-    t2 = time.time()
+print("There are {} files.".format(len(file_list)))
 
-    # We print the time spent on the processing
-    print('Image processed in {}:{}.'.format(int((t2-t1) // 60), int((t2-t1) % 60)))
+saving = 'saved/photos_list'
 
-    main.save('output.png')
-
-else:    
-    # We store each picture once analysed in an array
+if not os.path.exists(saving):
+    # We store each picture once analysed in photos_list
     photos_list = []
-    for a in file_list:
-        photos_list.append(Photo(a, 150))
-        photos_list[len(photos_list) - 1].make_blobs()
-        print(photos_list[len(photos_list) - 1])
+    for index, a in enumerate(file_list):
+        t1 = time.time()
+        photo = Photo(a)
+        photo.compute(9, 30, 0.17, 0.1)
+        t2 = time.time()
 
-    # We sort the picture by hue, then by saturation
-    # and finally by value if necessary
-    photos_list.sort(key= lambda Photo: Photo.colorHSB[2])
-    photos_list.sort(key= lambda Photo: Photo.colorHSB[1])
-    photos_list.sort(key= lambda Photo: Photo.colorHSB[0])
+        photos_list.append(photo)
 
-    # We save pictures once resized so it doesn't take too much space on the disk
-    # as it is saved in bitmap, and hence, uncompressed
-    for i in range(len(photos_list)):
-        print('Saving pictures: {} %'.format(int(i/len(file_list)*100)))
-        photos_list[i].save(i)
+        minutes = int((t2 - t1) // 60)
+        seconds = int((t2 - t1) % 60)
+        percent = int(index/len(file_list)*100)
 
-#os.system("pause")
+        print('Image processed in {0}:{1}. We\'re at {2} percent.'.format(minutes, seconds, percent))
+
+    with open(saving, 'wb') as file:
+        # dump information to that file
+        pickle.dump(photos_list, file)
+else:
+    with open(saving, 'rb') as file:
+        # dump information to that file
+        photos_list = pickle.load(file)
+
+saving = 'saved/dist_matrix'
+
+if not os.path.exists(saving):
+    dist_matrix = []
+    for i, p in enumerate(photos_list):
+        line = []
+
+        # Computing the distance between one picture and the others
+        for j, o in enumerate(photos_list):
+            final_dist = 0.0
+            i = len(o.colors)
+            frac = 1/i
+
+            for pc, oc in zip(p.colors, o.colors):
+                final_dist += distance.euclidean(pc, oc) * frac * i
+                i -= 1
+            line.append(final_dist)
+
+        dist_matrix.append(line)
+
+    with open(saving, 'wb') as file:
+        # dump information to that file
+        pickle.dump(dist_matrix, file)
+else:
+    with open(saving, 'rb') as file:
+        # dump information to that file
+        dist_matrix = pickle.load(file)
+
+# Sorting the pictures using dist-matrix
+index = 0
+sorted_pictures = []
+
+while 'index returned is real':
+
+    sorted_pictures.append(index)
+    # We add some 0 to make sure we don't fall back on that picture
+    for i in range(len(dist_matrix)):
+        dist_matrix[i][index] = 0
+
+    # We look for the minimum greater than 0 to have a new index
+    index = min_greater_than_0(dist_matrix[index])
+
+    if index is None:
+        break
+
+
+for i, el in enumerate(sorted_pictures):
+    print('Saving pictures: {} %'.format(int(i/len(file_list)*100)))
+    name = photos_list[el].path
+    name = name.split('/')[1]
+
+    photos_list[i].save("result/" + str(el) + "_" + str(name) + ".png")
+
