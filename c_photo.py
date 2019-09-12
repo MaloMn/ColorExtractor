@@ -13,12 +13,14 @@ class Photo:
         """
         self.path = path
         self.pixels = np.asarray(Image.open(self.path))
-        
+
         # We list the pixels in an array of dimension 2
         self.pixels_list = []
         for i in range(0, len(self.pixels), 1):
             for j in range(0, len(self.pixels[0]), 1):
                 self.pixels_list.append(RGBtoHSB(tuple(self.pixels[i, j].tolist())))
+
+        self.pixels = []
 
         self.nb_wished_colors, self.hue_rez, self.sat_rez, self.val_rez = (0, 0, 0, 0)
         self.colors = []
@@ -63,6 +65,7 @@ class Photo:
                     break
                 
         # self.colors now contains the most important colors.
+        self.pixels_list = []
     
     def save(self, name):
         """
@@ -95,6 +98,6 @@ class Photo:
             output.append(tuple(grid[i]))
         
         from png import Writer
-        with open('o_' + name + '.png', 'wb') as f:
+        with open(str(name), 'wb') as f:
             w = Writer(width, width, greyscale=False, alpha=False)
             w.write(f, output)
